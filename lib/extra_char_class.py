@@ -33,9 +33,14 @@ class FileOperatorExtraCharClass:
     def per_file_operator(self, filepath):
         with open(filepath, 'r') as infile:
             file_string = infile.read()
-            while self.prog.search(file_string):
-                file_string = self.prog.sub(self.replacer, file_string)
-            new_file_string = file_string
+            if self.prog.search(file_string):
+                while self.prog.search(file_string):
+                    file_string = self.prog.sub(self.replacer, file_string)
+                new_file_string = file_string
+            else:
+                new_file_string = None
 
-        with open(filepath, 'w') as outfile:
-            outfile.write(new_file_string)
+
+        if new_file_string is not None:
+            with open(filepath, 'w') as outfile:
+                outfile.write(new_file_string)
