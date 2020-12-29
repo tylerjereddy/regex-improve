@@ -17,8 +17,11 @@ import re
 
 class FileOperatorExtraCharClass:
     def __init__(self):
-        self.pattern = r'(?P<start>re\.compile\(.*?)(?P<offender>\[\\?.\])(?P<end>.*?[\'"].*?\))'
-        self.prog = re.compile(self.pattern)
+        self.pattern_compile = r'(?P<start>re\.compile\(\n*\s*r[\'"].*?)(?P<offender>\[\\?.\])(?P<end>\n*\s*.*?[\'"].*?\n*\s*\))'
+        self.pattern_match = r'(?P<start>re\.match\(\n*\s*r[\'"].*?)(?P<offender>\[\\?.\])(?P<end>.*\n*\s*,\s)'
+        self.pattern_list = [self.pattern_compile,
+                             self.pattern_match]
+        self.prog_list = [re.compile(pattern) for pattern in self.pattern_list]
 
     def replacer(self, match):
         # even if [\w], always start at second
@@ -33,13 +36,12 @@ class FileOperatorExtraCharClass:
     def per_file_operator(self, filepath):
         with open(filepath, 'r') as infile:
             file_string = infile.read()
-            if self.prog.search(file_string):
-                while self.prog.search(file_string):
-                    file_string = self.prog.sub(self.replacer, file_string)
-                new_file_string = file_string
-            else:
-                new_file_string = None
-
+            new_file_string = None
+            for prog in self.prog_list:
+                if prog.search(file_string):
+                    while prog.search(file_string):
+                        file_string = prog.sub(self.replacer, file_string)
+                    new_file_string = file_string
 
         if new_file_string is not None:
             with open(filepath, 'w') as outfile:
